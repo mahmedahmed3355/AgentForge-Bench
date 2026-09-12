@@ -1,1 +1,3 @@
-"""AgentForge-Bench core runtime primitives."""
+from .contracts import LongHorizonTaskRequirements
+
+__all__ = ["LongHorizonTaskRequirements"]

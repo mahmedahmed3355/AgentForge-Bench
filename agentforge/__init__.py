@@ -1,6 +1,6 @@
 """AgentForge-Bench core package."""
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 from .contracts import (
     Action,
@@ -20,10 +20,12 @@ from .contracts import (
     VerificationResult,
     Verifier,
 )
+from .core import LongHorizonTaskRequirements
 
 __all__ = [
     "Action",
     "EpisodeTrace",
+    "LongHorizonTaskRequirements",
     "Observation",
     "Oracle",
     "OracleResult",
