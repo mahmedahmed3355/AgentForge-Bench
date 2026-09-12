@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agentforge-bench"
-version = "0.1.0"
+version = "0.2.0"
 description = "AgentForge-Bench: training and evaluation environments for long-horizon AI agents and reinforcement learning."
 readme = "README.md"
 requires-python = ">=3.11"
@@ -12,9 +12,16 @@ dependencies = [
     "verifiers>=0.3.1,<0.4",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+]
+
 [tool.hatch.build.targets.wheel]
 packages = ["agentforge"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["."]
 addopts = "-ra"
