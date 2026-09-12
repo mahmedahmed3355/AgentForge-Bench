@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "scenario_id": "pipeline-v1-public-001",
+      "seed": 2001,
+      "incident_family": "schema"
+    },
+    {
+      "scenario_id": "pipeline-v1-public-002",
+      "seed": 2002,
+      "incident_family": "transformation"
+    },
+    {
+      "scenario_id": "pipeline-v1-public-003",
+      "seed": 2003,
+      "incident_family": "data_quality"
+    }
+  ]
+}
