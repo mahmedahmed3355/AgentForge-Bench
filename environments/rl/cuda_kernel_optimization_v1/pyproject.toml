@@ -8,7 +8,7 @@ version = "0.1.1"
 description = "AgentForge-Bench CUDA Kernel Optimization V1 environment."
 requires-python = ">=3.11"
 dependencies = [
-    "agentforge-bench @ git+https://github.com/mahmedahmed3355/AgentForge-Bench.git@ad51a4c3d0763d7d78461a6496c8712794e1aeda",
+    "agentforge-bench @ git+https://github.com/mahmedahmed3355/AgentForge-Bench.git@c807339cc2626508832d9235d6eea906bd486cc2",
     "verifiers>=0.3.1,<0.4",
 ]
 
