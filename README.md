@@ -39,14 +39,21 @@ agentforge/
 environments/
     Benchmark environments and Prime V1 tasksets.
 
+evaluator/
+    Evaluation boundary, hidden scenarios, and evaluation harnesses.
+
+benchmarks/
+    Benchmark registry, split metadata, and benchmark schemas.
+
 tests/
-    Automated tests.
+    Automated unit, integration, and environment tests.
 
 docs/
-    Architecture and benchmark methodology.
+    Architecture, benchmark methodology, and authoring documentation.
 
 datasets/
     Training and evaluation datasets.
+
 
 ## Benchmark Design
 
@@ -64,6 +71,28 @@ AgentForge-Bench targets:
 - Data pipeline recovery
 - Agentic coding and engineering workflows
 - Robust evaluation
+
+## Current Benchmark Status
+
+AgentForge-Bench currently contains its first frozen benchmark environment:
+
+- Task 001 — CUDA Kernel Optimization V1
+- Long-horizon stateful interaction
+- Branching optimization decisions
+- Failure detection and recovery
+- Oracle and independent verifier
+- Hidden evaluation boundary
+- Anti-cheating and anti-memorization checks
+- Reward-hacking resistance
+- Gymnasium adapter
+- Prime Verifiers V1 environment integration
+- Standalone package validation
+- Clean-room installation and runtime validation
+
+Task 001 is frozen as a reference environment. New benchmark tasks are
+added incrementally under `environments/`.
+
+The benchmark registry is maintained in `benchmarks/registry.yaml`.
 
 ## Evaluation Principles
 

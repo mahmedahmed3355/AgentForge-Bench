@@ -1,0 +1,17 @@
+version: 1
+
+benchmark:
+  name: AgentForge-Bench
+  description: >
+    Benchmark and environment framework for training and evaluating
+    long-horizon AI agents and reinforcement-learning systems.
+
+tasks:
+  - id: cuda-kernel-optimization-v1
+    path: environments/rl/cuda_kernel_optimization_v1
+    family: rl
+    domain: cuda_gpu_engineering
+    status: frozen
+    prime_api: verifiers.v1
+
+# Future tasks will be registered here.
