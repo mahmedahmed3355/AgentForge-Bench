@@ -4,13 +4,16 @@ build-backend = "hatchling.build"
 
 [project]
 name = "cuda-kernel-optimization-v1"
-version = "0.1.0"
+version = "0.1.1"
 description = "AgentForge-Bench CUDA Kernel Optimization V1 environment."
 requires-python = ">=3.11"
 dependencies = [
-    "agentforge-bench",
+    "agentforge-bench @ git+https://github.com/mahmedahmed3355/AgentForge-Bench.git@ad51a4c3d0763d7d78461a6496c8712794e1aeda",
     "verifiers>=0.3.1,<0.4",
 ]
+
+[tool.hatch.metadata]
+allow-direct-references = true
 
 [tool.hatch.build.targets.wheel]
 packages = ["cuda_kernel_optimization_v1"]
