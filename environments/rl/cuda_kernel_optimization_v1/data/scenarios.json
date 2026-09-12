@@ -1,0 +1,36 @@
+{
+  "train": [
+    {
+      "scenario_id": "cuda-v1-train-001",
+      "seed": 1001,
+      "matrix_size": 256,
+      "baseline_ms": 2.5,
+      "target_speedup": 1.1
+    },
+    {
+      "scenario_id": "cuda-v1-train-002",
+      "seed": 1002,
+      "matrix_size": 384,
+      "baseline_ms": 4.2,
+      "target_speedup": 1.15
+    }
+  ],
+  "eval": [
+    {
+      "scenario_id": "cuda-v1-eval-001",
+      "seed": 2001,
+      "matrix_size": 512,
+      "baseline_ms": 7.8,
+      "target_speedup": 1.2
+    }
+  ],
+  "hidden": [
+    {
+      "scenario_id": "cuda-v1-hidden-001",
+      "seed": 9001,
+      "matrix_size": 768,
+      "baseline_ms": 15.4,
+      "target_speedup": 1.25
+    }
+  ]
+}
