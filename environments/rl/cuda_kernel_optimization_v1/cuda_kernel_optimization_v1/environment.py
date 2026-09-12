@@ -1,328 +1,298 @@
 from __future__ import annotations
 
+from copy import deepcopy
+
 from dataclasses import dataclass, field
-from enum import StrEnum
+from enum import Enum
+
+from .decision_graph import DecisionKind, get_branch_outcome
+from .trajectory import Trajectory, Transition
 
 
-class OptimizationBranch(StrEnum):
-    MEMORY = "memory"
-    TILING = "tiling"
-    COMPUTE = "compute"
-
-
-class FailureType(StrEnum):
+class FailureType(str, Enum):
     NONE = "none"
     COMPILATION = "compilation"
     CORRECTNESS = "correctness"
     REGRESSION = "regression"
 
 
+# Backward-compatible public name for existing Task 001 tests/API.
+OptimizationBranch = DecisionKind
+
+
+
 @dataclass
 class CudaEnvironmentState:
+
     logical_stage: int = 0
     action_count: int = 0
-
     inspected: bool = False
-    optimization_branch: OptimizationBranch | None = None
-
+    optimization_branch: DecisionKind | None = None
     candidate_modified: bool = False
     compilation_ok: bool = False
     correctness_ok: bool = False
     benchmark_completed: bool = False
     analysis_completed: bool = False
-
     performance_improved: bool = False
     regression_detected: bool = False
-
     last_failure: FailureType = FailureType.NONE
     recovery_count: int = 0
-
     terminal: bool = False
     success: bool = False
-
+    finalized: bool = False
     history: list[str] = field(default_factory=list)
 
-    def record(self, event: str) -> None:
-        self.history.append(event)
+    def __getitem__(self, key: str):
+        return getattr(self, key)
 
-    def advance_stage(self, amount: int = 1) -> None:
-        self.logical_stage = min(20, self.logical_stage + amount)
+    def get(self, key: str, default=None):
+        return getattr(self, key, default)
 
-    def next_action(self) -> None:
-        self.action_count += 1
-
-    def fail(self, failure: FailureType, reason: str) -> None:
-        self.last_failure = failure
-        self.record(reason)
-
-    def recover(self, reason: str) -> None:
-        self.recovery_count += 1
-        self.last_failure = FailureType.NONE
-        self.regression_detected = False
-        self.record(reason)
+    def to_dict(self) -> dict[str, object]:
+        return {
+            name: getattr(self, name)
+            for name in self.__dataclass_fields__
+        }
 
 
 class CudaKernelOptimizationEnvironment:
     MAX_ACTIONS = 32
     LOGICAL_STAGES = 20
 
-    def __init__(self, seed: int = 0) -> None:
+    def __init__(self, seed: int | None = None) -> None:
         self.seed = seed
         self.state = CudaEnvironmentState()
+        self.trajectory = Trajectory()
 
-    def reset(self, seed: int | None = None) -> dict:
+    def reset(self, seed: int | None = None) -> CudaEnvironmentState:
         if seed is not None:
             self.seed = seed
 
         self.state = CudaEnvironmentState()
-        self.state.record(f"reset:seed={self.seed}")
-        return self.observe()
+        self.trajectory = Trajectory()
+        return deepcopy(self.state)
 
-    def observe(self) -> dict:
-        available_actions = [
-            "inspect",
-            "modify_memory",
-            "modify_tiling",
-            "modify_compute",
-            "compile",
-            "check_correctness",
-            "benchmark",
-            "analyze",
-            "recover",
-            "final_verify",
-        ]
-
-        if self.state.terminal:
-            available_actions = []
-
-        return {
-            "logical_stage": self.state.logical_stage,
-            "action_count": self.state.action_count,
-            "inspected": self.state.inspected,
-            "optimization_branch": (
-                self.state.optimization_branch.value
-                if self.state.optimization_branch
-                else None
+    def _record(
+        self,
+        action: str,
+        reward: float,
+        observation: str,
+        stage_before: int | None = None,
+    ) -> None:
+        self.trajectory.append(
+            step=self.state.action_count,
+            stage_before=(
+                self.state.logical_stage
+                if stage_before is None
+                else stage_before
             ),
-            "candidate_modified": self.state.candidate_modified,
-            "compilation_ok": self.state.compilation_ok,
-            "correctness_ok": self.state.correctness_ok,
-            "benchmark_completed": self.state.benchmark_completed,
-            "analysis_completed": self.state.analysis_completed,
-            "performance_improved": self.state.performance_improved,
-            "regression_detected": self.state.regression_detected,
-            "last_failure": self.state.last_failure.value,
-            "recovery_count": self.state.recovery_count,
-            "terminal": self.state.terminal,
-            "success": self.state.success,
-            "available_actions": available_actions,
-        }
+            stage_after=self.state.logical_stage,
+            action=action,
+            reward=reward,
+            success=self.state.success,
+            terminal=self.state.terminal,
+            observation=observation,
+            info={
+                "decision": (
+                    self.state.optimization_branch.value
+                    if self.state.optimization_branch is not None
+                    else None
+                ),
+                "failure": self.state.last_failure,
+                "recovery_count": self.state.recovery_count,
+            },
+        )
 
-    def step(self, action: str) -> tuple[dict, float, bool, dict]:
+    def _advance(self, amount: int) -> None:
+        self.state.logical_stage = min(
+            self.LOGICAL_STAGES,
+            self.state.logical_stage + amount,
+        )
+
+    def step(self, action: str):
+        stage_before = self.state.logical_stage
+
         if self.state.terminal:
-            return self.observe(), -1.0, True, {
-                "error": "episode_already_terminal"
+            return self.state, 0.0, True, {
+                "reason": "terminal",
             }
 
-        self.state.next_action()
-
-        reward = 0.0
-        info: dict = {}
-
-        if action == "inspect":
-            reward = self._inspect()
-
-        elif action == "modify_memory":
-            reward = self._modify(OptimizationBranch.MEMORY)
-
-        elif action == "modify_tiling":
-            reward = self._modify(OptimizationBranch.TILING)
-
-        elif action == "modify_compute":
-            reward = self._modify(OptimizationBranch.COMPUTE)
-
-        elif action == "compile":
-            reward = self._compile()
-
-        elif action == "check_correctness":
-            reward = self._check_correctness()
-
-        elif action == "benchmark":
-            reward = self._benchmark()
-
-        elif action == "analyze":
-            reward = self._analyze()
-
-        elif action == "recover":
-            reward = self._recover()
-
-        elif action == "final_verify":
-            reward = self._final_verify()
-
-        else:
-            reward = -0.50
-            info["invalid_action"] = action
-            self.state.record(f"invalid:{action}")
-
-        if self.state.action_count >= self.MAX_ACTIONS and not self.state.terminal:
+        if self.state.action_count >= self.MAX_ACTIONS:
             self.state.terminal = True
             self.state.success = False
-            info["truncated"] = True
+            self._record(action, -1.0, "maximum action budget reached")
+            return self.state, -1.0, True, {
+                "reason": "max_actions",
+            }
 
-        return (
-            self.observe(),
-            reward,
-            self.state.terminal,
-            info,
-        )
+        self.state.action_count += 1
+        reward = 0.0
+        observation = ""
 
-    def _inspect(self) -> float:
-        if self.state.inspected:
-            self.state.record("inspect:repeat")
-            return -0.05
+        if action == "inspect":
+            self.state.inspected = True
+            self._advance(2)
+            reward = 1.0
+            observation = "kernel inspected"
 
-        self.state.inspected = True
-        self.state.advance_stage(2)
-        self.state.record("inspect:complete")
-        return 0.20
+        elif action == "modify_memory":
+            if not self.state.inspected:
+                reward = -1.0
+                observation = "invalid: inspect required"
+            else:
+                self.state.optimization_branch = DecisionKind.MEMORY
+                self.state.candidate_modified = True
+                self._advance(3)
+                reward = 1.5
+                observation = "memory optimization candidate applied"
 
-    def _modify(self, branch: OptimizationBranch) -> float:
-        if not self.state.inspected:
-            self.state.record("modify:before_inspect")
-            return -0.20
+        elif action == "modify_tiling":
+            if not self.state.inspected:
+                reward = -1.0
+                observation = "invalid: inspect required"
+            else:
+                self.state.optimization_branch = DecisionKind.TILING
+                self.state.candidate_modified = True
+                self._advance(3)
+                reward = 1.5
+                observation = "tiling optimization candidate applied"
 
-        if self.state.candidate_modified:
-            self.state.record("modify:repeat")
-            return -0.05
+        elif action == "modify_compute":
+            if not self.state.inspected:
+                reward = -1.0
+                observation = "invalid: inspect required"
+            else:
+                self.state.optimization_branch = DecisionKind.COMPUTE
+                self.state.candidate_modified = True
+                self._advance(3)
+                reward = 1.5
+                observation = "compute optimization candidate applied"
 
-        self.state.optimization_branch = branch
-        self.state.candidate_modified = True
-        self.state.compilation_ok = False
-        self.state.correctness_ok = False
-        self.state.benchmark_completed = False
-        self.state.analysis_completed = False
-        self.state.performance_improved = False
-        self.state.regression_detected = False
+        elif action == "compile":
+            if not self.state.candidate_modified:
+                reward = -1.0
+                observation = "invalid: candidate modification required"
+            else:
+                branch = self.state.optimization_branch
+                outcome = get_branch_outcome(branch)
 
-        self.state.advance_stage(3)
-        self.state.record(f"modify:{branch.value}")
-        return 0.50
+                if outcome.compile_success:
+                    self.state.compilation_ok = True
+                    self._advance(3)
+                    reward = 2.0
+                    observation = "compilation succeeded"
+                else:
+                    self.state.compilation_ok = False
+                    self.state.last_failure = FailureType.COMPILATION
+                    self.state.regression_detected = outcome.delayed_regression
+                    self._advance(1)
+                    reward = -2.0
+                    observation = "compilation failed; recovery required"
 
-    def _compile(self) -> float:
-        if not self.state.candidate_modified:
-            self.state.fail(
-                FailureType.COMPILATION,
-                "compile:missing_candidate",
-            )
-            return -0.30
+        elif action == "check_correctness":
+            if not self.state.compilation_ok:
+                reward = -1.5
+                observation = "invalid: successful compilation required"
+            else:
+                branch = self.state.optimization_branch
+                outcome = get_branch_outcome(branch)
 
-        if self.state.optimization_branch == OptimizationBranch.COMPUTE:
-            self.state.fail(
-                FailureType.COMPILATION,
-                "compile:compute_branch_failure",
-            )
-            self.state.compilation_ok = False
-            return -0.25
+                if outcome.correctness_success:
+                    self.state.correctness_ok = True
+                    self._advance(3)
+                    reward = 2.5
+                    observation = "correctness checks passed"
+                else:
+                    self.state.correctness_ok = False
+                    self.state.last_failure = FailureType.CORRECTNESS
+                    self._advance(1)
+                    reward = -2.0
+                    observation = "correctness failure detected"
 
-        self.state.compilation_ok = True
-        self.state.advance_stage(3)
-        self.state.record("compile:success")
-        return 0.50
+        elif action == "benchmark":
+            if not self.state.correctness_ok:
+                reward = -1.5
+                observation = "invalid: correctness must pass first"
+            else:
+                branch = self.state.optimization_branch
+                outcome = get_branch_outcome(branch)
 
-    def _check_correctness(self) -> float:
-        if not self.state.compilation_ok:
-            self.state.fail(
-                FailureType.CORRECTNESS,
-                "correctness:compile_required",
-            )
-            return -0.25
+                if outcome.benchmark_success:
+                    self.state.benchmark_completed = True
+                    self.state.performance_improved = True
+                    self._advance(2)
+                    reward = 3.0
+                    observation = "benchmark completed with improvement"
+                else:
+                    self.state.benchmark_completed = False
+                    self._advance(1)
+                    reward = -1.0
+                    observation = "benchmark did not establish improvement"
 
-        if self.state.optimization_branch == OptimizationBranch.MEMORY:
-            self.state.fail(
-                FailureType.CORRECTNESS,
-                "correctness:memory_branch_failure",
-            )
-            self.state.correctness_ok = False
-            return -0.40
+        elif action == "analyze":
+            if not self.state.benchmark_completed:
+                reward = -1.0
+                observation = "invalid: benchmark required"
+            else:
+                self.state.analysis_completed = True
+                self._advance(2)
+                reward = 1.5
+                observation = "benchmark results analyzed"
 
-        self.state.correctness_ok = True
-        self.state.advance_stage(3)
-        self.state.record("correctness:pass")
-        return 0.75
+        elif action == "recover":
+            if self.state.last_failure == FailureType.NONE:
+                reward = -1.0
+                observation = "invalid: no recoverable failure"
+            else:
+                self.state.recovery_count += 1
+                self.state.last_failure = FailureType.NONE
+                self.state.candidate_modified = False
+                self.state.compilation_ok = False
+                self.state.correctness_ok = False
+                self.state.benchmark_completed = False
+                self.state.analysis_completed = False
+                self.state.performance_improved = False
+                self.state.regression_detected = False
+                self._advance(1)
+                reward = 1.0
+                observation = "recovery completed; replanning allowed"
 
-    def _benchmark(self) -> float:
-        if not self.state.correctness_ok:
-            self.state.record("benchmark:blocked")
-            return -0.25
+        elif action == "final_verify":
+            if (
+                self.state.logical_stage >= self.LOGICAL_STAGES
+                and self.state.correctness_ok
+                and self.state.performance_improved
+                and self.state.analysis_completed
+            ):
+                self.state.success = True
+                self.state.finalized = True
+                self.state.terminal = True
+                reward = 10.0
+                observation = "final verification passed"
+            else:
+                reward = -2.0
+                observation = "final verification failed"
 
-        self.state.benchmark_completed = True
-        self.state.advance_stage(2)
+        else:
+            reward = -1.0
+            observation = f"invalid action: {action}"
 
-        if self.state.optimization_branch == OptimizationBranch.TILING:
-            self.state.performance_improved = True
-            self.state.regression_detected = False
-            self.state.record("benchmark:improvement")
-            return 0.75
+        self.state.history.append(action)
+        self._record(action, reward, observation, stage_before)
 
-        self.state.performance_improved = False
-        self.state.regression_detected = True
-        self.state.fail(
-            FailureType.REGRESSION,
-            "benchmark:performance_regression",
-        )
-        return -0.35
-
-    def _analyze(self) -> float:
-        if not self.state.benchmark_completed:
-            self.state.record("analyze:benchmark_required")
-            return -0.20
-
-        self.state.analysis_completed = True
-        self.state.advance_stage(2)
-        self.state.record("analyze:complete")
-
-        if self.state.regression_detected:
-            return 0.10
-
-        return 0.25
-
-    def _recover(self) -> float:
-        if self.state.last_failure == FailureType.NONE and not self.state.regression_detected:
-            self.state.record("recover:nothing_to_recover")
-            return -0.10
-
-        self.state.recover("recover:complete")
-
-        self.state.candidate_modified = False
-        self.state.compilation_ok = False
-        self.state.correctness_ok = False
-        self.state.benchmark_completed = False
-        self.state.analysis_completed = False
-        self.state.performance_improved = False
-
-        self.state.advance_stage(1)
-        return 0.30
-
-    def _final_verify(self) -> float:
-        if (
-            self.state.logical_stage >= self.LOGICAL_STAGES
-            and self.state.correctness_ok
-            and self.state.performance_improved
-            and self.state.analysis_completed
-        ):
-            self.state.logical_stage = self.LOGICAL_STAGES
-            self.state.terminal = True
-            self.state.success = True
-            self.state.record("final_verify:success")
-            return 5.0
-
-        self.state.record("final_verify:failure")
-        return -0.50
-
-
-__all__ = [
-    "CudaEnvironmentState",
-    "CudaKernelOptimizationEnvironment",
-    "FailureType",
-    "OptimizationBranch",
-]
+        done = self.state.terminal
+        return self.state, reward, done, {
+            "failure": self.state.last_failure,
+            "performance_improved": self.state.performance_improved,
+            "regression_detected": self.state.regression_detected,
+            "decision": (
+                self.state.optimization_branch.value
+                if self.state.optimization_branch is not None
+                else None
+            ),
+            "observation": observation,
+            "logical_stage": self.state.logical_stage,
+            "action_count": self.state.action_count,
+            "recovery_count": self.state.recovery_count,
+            "success": self.state.success,
+        }

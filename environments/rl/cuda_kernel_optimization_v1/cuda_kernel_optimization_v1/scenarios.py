@@ -13,7 +13,7 @@ class Scenario:
     target_speedup: float
 
 
-SCENARIOS = (
+PUBLIC_SCENARIOS: tuple[Scenario, ...] = (
     Scenario(
         scenario_id="cuda-v1-train-001",
         split="train",
@@ -38,12 +38,9 @@ SCENARIOS = (
         baseline_ms=7.80,
         target_speedup=1.20,
     ),
-    Scenario(
-        scenario_id="cuda-v1-hidden-001",
-        split="hidden",
-        seed=9001,
-        matrix_size=768,
-        baseline_ms=15.40,
-        target_speedup=1.25,
-    ),
 )
+
+
+def load_public_scenarios() -> tuple[Scenario, ...]:
+    """Return only agent-facing train/eval scenarios."""
+    return PUBLIC_SCENARIOS

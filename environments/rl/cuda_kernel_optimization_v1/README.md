@@ -77,3 +77,32 @@ This first implementation establishes the Prime V1 taskset and the benchmark con
 The actual CUDA compilation, runtime benchmarking, randomized correctness testing, and sandboxed kernel execution are added only after the taskset contract passes baseline validation.
 
 This prevents CUDA infrastructure failures from being confused with task-design failures.
+
+## Execution Reporting and Gymnasium
+
+Task 001 exposes a runtime execution reporting layer through
+`EpisodeReporter` and `AgentEpisodeReport`.
+
+Reports capture:
+
+- task and scenario identity
+- seed and episode identity
+- action trajectory
+- logical stages reached
+- rewards
+- failures
+- decisions
+- recovery events
+- wall-clock execution time
+- input/output/total token usage
+- derived efficiency metrics
+- verifier result
+- oracle result
+- final success status
+
+Gymnasium integration is provided through
+`CudaKernelOptimizationGymEnv`.
+
+The Gymnasium adapter is intentionally separate from the native
+AgentForge environment so the AgentForge environment remains the
+source of truth for state transitions and reward semantics.

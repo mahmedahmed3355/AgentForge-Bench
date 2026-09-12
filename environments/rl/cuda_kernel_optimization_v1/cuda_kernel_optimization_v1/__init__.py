@@ -1,21 +1,10 @@
-from .environment import (
-    CudaEnvironmentState,
-    CudaKernelOptimizationEnvironment,
-    FailureType,
-    OptimizationBranch,
+from .prime_environment import (
+    CudaKernelOptimizationEnv,
+    CudaKernelOptimizationEnvConfig,
 )
-from .taskset import (
-    CudaKernelOptimizationData,
-    CudaKernelOptimizationTask,
-    CudaKernelOptimizationTaskset,
-)
+from .taskset import CudaKernelOptimizationTaskset
 
 __all__ = [
-    "CudaEnvironmentState",
-    "CudaKernelOptimizationData",
-    "CudaKernelOptimizationEnvironment",
-    "CudaKernelOptimizationTask",
+    "CudaKernelOptimizationEnv",
     "CudaKernelOptimizationTaskset",
-    "FailureType",
-    "OptimizationBranch",
 ]

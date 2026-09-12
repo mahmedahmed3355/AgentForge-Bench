@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+from .prime_toolset import CudaOptimizationToolset
+
+from verifiers.v1.mcp import ToolsetConfig
 from dataclasses import dataclass
-from typing import Any
 
 import verifiers.v1 as vf
 
+__all__ = ["CudaKernelOptimizationTaskset"]
+
+from .scenarios import load_public_scenarios
+
 
 @dataclass(frozen=True)
-class KernelScenario:
+class _TasksetScenario:
     scenario_id: str
     seed: int
     matrix_size: int
@@ -28,13 +34,10 @@ class CudaKernelOptimizationTask(vf.Task[CudaKernelOptimizationData]):
     @vf.reward
     async def progress_reward(self, trace: vf.Trace) -> float:
         turns = trace.num_turns
-
         if turns <= 0:
             return 0.0
-
         if trace.last_reply:
             return min(0.25, 0.05 * turns)
-
         return 0.0
 
     @vf.stop
@@ -42,40 +45,17 @@ class CudaKernelOptimizationTask(vf.Task[CudaKernelOptimizationData]):
         return trace.num_turns >= 32
 
 
+
+    @classmethod
+    def toolsets(cls, config: ConfigT) -> list:
+        """Return the task-scoped CUDA action tools for Prime V1."""
+        return [CudaOptimizationToolset(ToolsetConfig())]
+
 class CudaKernelOptimizationTaskset(
     vf.Taskset[CudaKernelOptimizationTask, vf.TasksetConfig]
 ):
     def load(self) -> list[CudaKernelOptimizationTask]:
-        scenarios = [
-            KernelScenario(
-                scenario_id="cuda-v1-train-001",
-                seed=1001,
-                matrix_size=256,
-                baseline_ms=2.50,
-                target_speedup=1.10,
-            ),
-            KernelScenario(
-                scenario_id="cuda-v1-train-002",
-                seed=1002,
-                matrix_size=384,
-                baseline_ms=4.20,
-                target_speedup=1.15,
-            ),
-            KernelScenario(
-                scenario_id="cuda-v1-eval-001",
-                seed=2001,
-                matrix_size=512,
-                baseline_ms=7.80,
-                target_speedup=1.20,
-            ),
-            KernelScenario(
-                scenario_id="cuda-v1-hidden-001",
-                seed=9001,
-                matrix_size=768,
-                baseline_ms=15.40,
-                target_speedup=1.25,
-            ),
-        ]
+        scenarios = load_public_scenarios()
 
         tasks: list[CudaKernelOptimizationTask] = []
 
@@ -92,6 +72,12 @@ class CudaKernelOptimizationTaskset(
 
             task_data = CudaKernelOptimizationData(
                 idx=idx,
+                name=f"CUDA Kernel Optimization — {scenario.scenario_id}",
+                description=(
+                    "Long-horizon CUDA kernel optimization task with "
+                    "branching, correctness constraints, performance targets, "
+                    "and recovery."
+                ),
                 prompt=prompt,
                 scenario_id=scenario.scenario_id,
                 seed=scenario.seed,
@@ -100,15 +86,6 @@ class CudaKernelOptimizationTaskset(
                 target_speedup=scenario.target_speedup,
             )
 
-            tasks.append(
-                CudaKernelOptimizationTask(task_data)
-            )
+            tasks.append(CudaKernelOptimizationTask(task_data))
 
         return tasks
-
-
-__all__ = [
-    "CudaKernelOptimizationData",
-    "CudaKernelOptimizationTask",
-    "CudaKernelOptimizationTaskset",
-]

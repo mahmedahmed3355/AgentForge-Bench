@@ -10,5 +10,5 @@ def test_prime_v1_taskset_contract():
 
     tasks = taskset.load()
 
-    assert len(tasks) == 4
+    assert len(tasks) == 3
     assert all(isinstance(task, vf.Task) for task in tasks)
