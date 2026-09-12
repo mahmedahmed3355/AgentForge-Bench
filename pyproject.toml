@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "agentforge-bench"
-version = "0.2.0"
+version = "0.3.0"
 description = "AgentForge-Bench: training and evaluation environments for long-horizon AI agents and reinforcement learning."
 readme = "README.md"
 requires-python = ">=3.11"
