@@ -1,24 +1,22 @@
-"""AgentForge-Bench core package."""
-
-__version__ = "0.2.0"
-
-from .contracts import (
+from .interfaces import (
+    Oracle,
+    RewardFunction,
+    ScenarioGenerator,
+    Task,
+    Taskset,
+    Verifier,
+)
+from .models import (
     Action,
     EpisodeTrace,
     Observation,
-    Oracle,
     OracleResult,
-    RewardFunction,
     RewardResult,
     Scenario,
-    ScenarioGenerator,
     StepResult,
-    Task,
     TaskData,
-    Taskset,
     TraceEvent,
     VerificationResult,
-    Verifier,
 )
 
 __all__ = [
