@@ -330,11 +330,11 @@ Do not add arbitrary failures or unnecessary actions merely to increase difficul
 
 Current status:
 
-Release Candidate
+Released / Frozen
 
-Task 003 has passed the current regression and final report audit.
+Task 003 has passed regression, standalone clean-room validation, Prime V1 integration validation, hidden/unseen scenario validation, Oracle validation, independent Verifier validation, Gymnasium validation, and final release-readiness audit.
 
-The environment is not considered permanently frozen until release-candidate validation, standalone clean-room validation, Prime validation, and agent calibration are completed.
+Task 003 is released as version 0.1.0.
 
 ## Version
 

@@ -21,4 +21,11 @@ tasks:
     status: frozen
     prime_api: verifiers.v1
 
+  - id: branching-decision-recovery-v1
+    path: environments/rl/branching_decision_recovery_v1
+    family: rl
+    domain: decision_making_recovery
+    status: frozen
+    prime_api: verifiers.v1
+
 # Future tasks will be registered here.
