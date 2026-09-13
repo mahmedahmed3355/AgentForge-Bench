@@ -7,6 +7,13 @@ benchmark:
     long-horizon AI agents and reinforcement-learning systems.
 
 tasks:
+  - id: data-pipeline-recovery-v1
+    path: environments/rl/data_pipeline_recovery_v1
+    family: rl
+    domain: data_pipeline_recovery
+    status: active
+    prime_api: verifiers.v1
+
   - id: cuda-kernel-optimization-v1
     path: environments/rl/cuda_kernel_optimization_v1
     family: rl

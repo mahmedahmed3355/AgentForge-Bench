@@ -257,6 +257,19 @@ class DataPipelineRecoveryEnv:
             self.state.aggregation_valid,
         )
 
+        if strategy in (
+            RecoveryStrategy.OPTIMIZE_EXECUTION,
+            RecoveryStrategy.RETRY_WITH_RECOVERY,
+        ):
+            self.pipeline.set_valid(
+                PipelineComponent.OUTPUT_VALIDATION,
+                True,
+            )
+            self.pipeline.set_valid(
+                PipelineComponent.OUTPUT,
+                True,
+            )
+
         self._sync_pipeline_state()
 
     def step(
@@ -447,38 +460,74 @@ class DataPipelineRecoveryEnv:
             )
 
         if action == ActionKind.RUN_PIPELINE:
-
-            if not self.state.strategy_selected:
+            if self.state.selected_strategy is None:
                 return self._invalid(
                     "strategy_required",
-                    -1.0,
+                    reward=-1.0,
                 )
 
-            run = self.pipeline.run()
+            self.state.logical_stage += 2
 
+            invalid_components = []
+            blocked_components = []
+
+            for component in (
+                PipelineComponent.SCHEMA,
+                PipelineComponent.CLEANING,
+                PipelineComponent.TRANSFORMATION,
+                PipelineComponent.AGGREGATION,
+                PipelineComponent.OUTPUT_VALIDATION,
+                PipelineComponent.OUTPUT,
+            ):
+                dependencies_valid = all(
+                    self.pipeline.is_valid(parent)
+                    for parent in self.pipeline.dependencies(component)
+                )
+
+                if not dependencies_valid:
+                    invalid_components.append(component.value)
+                    if self.pipeline.is_blocked(component):
+                        blocked_components.append(component.value)
+                    break
+
+                self.pipeline.set_valid(component, True)
+
+            self._sync_pipeline_state()
+
+            run = self.pipeline.run()
             self.state.pipeline_run_completed = run.completed
-            self._advance(2)
 
             if (
-                self.state.downstream_inconsistency
+                invalid_components
                 or not run.globally_valid
+                or self.state.downstream_inconsistency
             ):
                 self.state.failure_detected = True
                 self.state.recovery_required = True
 
+                remaining_invalid = tuple(
+                    component
+                    for component in run.invalid_components
+                    if component not in invalid_components
+                )
+
                 return self._result(
-                    -2.0,
+                    reward=-2.0,
                     info={
                         "phase": "execution",
                         "status": "downstream_failure",
                         "result": "downstream_failure",
-                        "invalid_components": run.invalid_components,
-                        "blocked_components": run.blocked_components,
+                        "invalid_components": tuple(
+                            invalid_components
+                        ) + remaining_invalid,
+                        "blocked_components": tuple(
+                            blocked_components
+                        ),
                     },
                 )
 
             return self._result(
-                2.0,
+                reward=2.0,
                 info={
                     "phase": "execution",
                     "status": "completed",

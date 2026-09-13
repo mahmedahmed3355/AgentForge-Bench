@@ -69,8 +69,9 @@ def test_local_transformation_repair_does_not_make_pipeline_global_valid():
     result = env.step(ActionKind.RUN_PIPELINE)
 
     assert result.info["result"] == "downstream_failure"
-    assert result.info["invalid_components"]
+    assert env.state.downstream_inconsistency
     assert env.state.recovery_required
+    assert not env.state.success
 
 
 def test_causal_state_is_reflected_in_public_state():
