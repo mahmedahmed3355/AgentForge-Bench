@@ -1,0 +1,20 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "scenario_id": "decision-v1-public-001",
+      "seed": 3001,
+      "scenario_family": "dependency"
+    },
+    {
+      "scenario_id": "decision-v1-public-002",
+      "seed": 3002,
+      "scenario_family": "configuration"
+    },
+    {
+      "scenario_id": "decision-v1-public-003",
+      "seed": 3003,
+      "scenario_family": "cascade"
+    }
+  ]
+}
