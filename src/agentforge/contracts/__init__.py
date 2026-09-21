@@ -33,3 +33,13 @@ __all__ = [
     "TaskContract",
     "TerminationContract",
 ]
+
+# Canonical Environment Contract
+from .environment import (
+    Action,
+    EnvironmentContract,
+    Info,
+    Observation,
+    StepResult,
+)
+

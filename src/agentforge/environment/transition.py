@@ -17,10 +17,10 @@ class Transition:
             raise TypeError("reward must be numeric")
 
         if self.reward != self.reward:
-            raise ValueError("reward must not be NaN")
+            raise ValueError("reward must be a finite scalar")
 
         if self.reward in (float("inf"), float("-inf")):
-            raise ValueError("reward must be finite")
+            raise ValueError("reward must be a finite scalar")
 
         if self.terminated and self.truncated:
             raise ValueError(

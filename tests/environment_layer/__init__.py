@@ -1,1 +1,0 @@
-"""Environment layer contract tests."""
