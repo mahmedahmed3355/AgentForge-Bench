@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentforge.dev/schemas/reward.schema.json",
+  "title": "AgentForge Reward Breakdown",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "components",
+    "total"
+  ],
+  "properties": {
+    "components": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/reward_component"
+      }
+    },
+    "total": {
+      "type": "number"
+    }
+  },
+  "$defs": {
+    "reward_component": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "value"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "value": {
+          "type": "number"
+        },
+        "weight": {
+          "type": "number"
+        }
+      }
+    }
+  }
+}

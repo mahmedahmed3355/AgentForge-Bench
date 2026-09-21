@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentforge.dev/schemas/episode.schema.json",
+  "title": "AgentForge Episode Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "observation",
+    "total_reward",
+    "step_count",
+    "terminated",
+    "truncated",
+    "trajectory"
+  ],
+  "properties": {
+    "observation": {},
+    "total_reward": {
+      "type": "number"
+    },
+    "step_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "terminated": {
+      "type": "boolean"
+    },
+    "truncated": {
+      "type": "boolean"
+    },
+    "trajectory": {
+      "type": "array"
+    }
+  }
+}

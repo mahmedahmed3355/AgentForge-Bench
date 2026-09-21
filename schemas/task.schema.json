@@ -1,0 +1,365 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentforge.dev/schemas/task.schema.json",
+  "title": "AgentForge Task Specification",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "identity",
+    "environment",
+    "scenario",
+    "actions",
+    "observations",
+    "reward",
+    "termination",
+    "success",
+    "oracle",
+    "verifier",
+    "compatibility"
+  ],
+  "properties": {
+    "identity": {
+      "$ref": "#/$defs/task_identity"
+    },
+    "environment": {
+      "$ref": "#/$defs/environment_binding"
+    },
+    "scenario": {
+      "$ref": "#/$defs/scenario_spec"
+    },
+    "actions": {
+      "$ref": "#/$defs/action_spec"
+    },
+    "observations": {
+      "$ref": "#/$defs/observation_spec"
+    },
+    "reward": {
+      "$ref": "#/$defs/reward_spec"
+    },
+    "termination": {
+      "$ref": "#/$defs/termination_spec"
+    },
+    "success": {
+      "$ref": "#/$defs/success_spec"
+    },
+    "oracle": {
+      "$ref": "#/$defs/oracle_spec"
+    },
+    "verifier": {
+      "$ref": "#/$defs/verifier_spec"
+    },
+    "compatibility": {
+      "$ref": "#/$defs/compatibility_spec"
+    },
+    "objective": {
+      "type": "string"
+    },
+    "difficulty": {
+      "type": "number",
+      "minimum": 0
+    },
+    "horizon": {
+      "anyOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "capabilities": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "uniqueItems": true
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "$defs": {
+    "task_identity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "task_id",
+        "version",
+        "domain"
+      ],
+      "properties": {
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain": {
+          "type": "string",
+          "minLength": 1
+        },
+        "split": {
+          "type": "string",
+          "default": "rl",
+          "minLength": 1
+        }
+      }
+    },
+    "environment_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "environment_id"
+      ],
+      "properties": {
+        "environment_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "environment_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "version": {
+          "type": "string"
+        },
+        "max_episode_steps": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "scenario_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scenario_id"
+      ],
+      "properties": {
+        "scenario_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "generator": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "action_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "vocabulary"
+      ],
+      "properties": {
+        "vocabulary": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "schema": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "observation_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "schema"
+      ],
+      "properties": {
+        "schema": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "description": {
+          "type": "string"
+        }
+      }
+    },
+    "reward_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "kind": {
+          "type": "string",
+          "minLength": 1
+        },
+        "specification": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "termination_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "termination_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "truncation_conditions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "max_episode_steps": {
+          "anyOf": [
+            {
+              "type": "integer",
+              "minimum": 1
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "success_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "criteria"
+      ],
+      "properties": {
+        "criteria": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "success_reward": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "oracle_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "oracle_id"
+      ],
+      "properties": {
+        "oracle_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "configuration": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "verifier_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "verifier_id"
+      ],
+      "properties": {
+        "verifier_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "implementation": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "configuration": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    },
+    "compatibility_spec": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version"
+      ],
+      "properties": {
+        "contract_version": {
+          "type": "string",
+          "minLength": 1
+        },
+        "gymnasium_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "framework_version": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

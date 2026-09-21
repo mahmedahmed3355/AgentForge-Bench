@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agentforge.dev/schemas/trajectory.schema.json",
+  "title": "AgentForge Trajectory",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "episode_id",
+    "task_id",
+    "scenario_id",
+    "seed",
+    "steps"
+  ],
+  "properties": {
+    "episode_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "task_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "scenario_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "seed": {
+      "type": "integer"
+    },
+    "steps": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/trajectory_step"
+      }
+    }
+  },
+  "$defs": {
+    "trajectory_step": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "episode_id",
+        "task_id",
+        "scenario_id",
+        "seed",
+        "step_index",
+        "observation",
+        "action",
+        "reward_total",
+        "reward_components",
+        "terminated",
+        "truncated",
+        "info"
+      ],
+      "properties": {
+        "episode_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "task_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "scenario_id": {
+          "type": "string",
+          "minLength": 1
+        },
+        "seed": {
+          "type": "integer"
+        },
+        "step_index": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "observation": {},
+        "action": {},
+        "reward_total": {
+          "type": "number"
+        },
+        "reward_components": {
+          "$ref": "reward.schema.json"
+        },
+        "terminated": {
+          "type": "boolean"
+        },
+        "truncated": {
+          "type": "boolean"
+        },
+        "info": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      }
+    }
+  }
+}
