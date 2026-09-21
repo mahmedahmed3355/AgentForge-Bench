@@ -112,3 +112,20 @@ The runtime trajectory recording component is `agentforge.runtime.trajectory_rec
 `TrajectoryRecorder` captures episode interaction data and produces trajectory steps using the canonical `agentforge.runtime.trajectory.TrajectoryStep` contract.
 
 The recorder does not define a second canonical `TrajectoryStep` model. It uses the canonical trajectory model from `runtime/trajectory.py`.
+## Canonical Trajectory API
+
+The canonical trajectory model is:
+
+`agentforge.runtime.trajectory.Trajectory`
+
+The canonical trajectory step model is:
+
+`agentforge.runtime.trajectory.TrajectoryStep`
+
+The canonical recording component is:
+
+`agentforge.runtime.trajectory_recorder.TrajectoryRecorder`
+
+Any compatibility or legacy trajectory representation must delegate to or preserve
+the semantics of these canonical runtime models and must not define a competing
+canonical `TrajectoryStep`.

@@ -64,20 +64,13 @@ class GymnasiumAdapter(gym.Env[Any, Any]):
                 "environment must not be None."
             )
 
-        if not hasattr(environment, "action_space"):
-            raise TypeError(
-                "Native environment must define action_space."
-            )
-
-        if not hasattr(environment, "observation_space"):
-            raise TypeError(
-                "Native environment must define observation_space."
-            )
 
         self._environment = environment
 
-        self.action_space = environment.action_space
-        self.observation_space = environment.observation_space
+        # Preserve compatibility with native environments that do not expose
+        # explicit Gymnasium spaces. Expose spaces only when provided.
+        self.action_space = getattr(environment, "action_space", None)
+        self.observation_space = getattr(environment, "observation_space", None)
 
         native_metadata = getattr(
             environment,
@@ -99,16 +92,33 @@ class GymnasiumAdapter(gym.Env[Any, Any]):
         seed: int | None = None,
         options: dict[str, Any] | None = None,
     ) -> tuple[Any, dict[str, Any]]:
-        """Reset the native environment using Gymnasium's contract."""
+        "Reset the wrapped native environment using the Gymnasium contract."
 
         super().reset(seed=seed)
 
-        observation, info = self._environment.reset(
-            seed=seed,
-            options=options,
-        )
+        reset_method = self._environment.reset
 
-        if not self.observation_space.contains(observation):
+        if options is not None:
+            try:
+                result = reset_method(seed=seed, options=options)
+            except TypeError as exc:
+                if "unexpected keyword argument" not in str(exc):
+                    raise
+                result = reset_method(seed=seed)
+        else:
+            try:
+                result = reset_method(seed=seed)
+            except TypeError as exc:
+                if "unexpected keyword argument" not in str(exc):
+                    raise
+                result = reset_method()
+
+        if isinstance(result, tuple) and len(result) == 2:
+            observation, info = result
+        else:
+            observation, info = result, {}
+
+        if self.observation_space is not None and not self.observation_space.contains(observation):
             raise ValueError(
                 "Native environment returned an observation outside "
                 "observation_space."
@@ -126,40 +136,47 @@ class GymnasiumAdapter(gym.Env[Any, Any]):
         self,
         action: Any,
     ) -> tuple[Any, float, bool, bool, dict[str, Any]]:
-        """Execute one native environment step."""
+        "Execute one native environment step using Gymnasium semantics."
 
-        if not self.action_space.contains(action):
+        if self.action_space is not None and not self.action_space.contains(action):
             raise ValueError(
                 "Action is not contained in action_space."
             )
 
-        observation, reward, terminated, truncated, info = (
-            self._environment.step(action)
-        )
+        result = self._environment.step(action)
 
-        if not self.observation_space.contains(observation):
+        if not isinstance(result, tuple):
+            raise TypeError(
+                "Native environment step() must return a tuple."
+            )
+
+        if len(result) == 5:
+            observation, reward, terminated, truncated, info = result
+        elif len(result) == 4:
+            observation, reward, done, info = result
+            terminated = bool(done)
+            truncated = False
+        else:
+            raise ValueError(
+                "Native environment step() must return 4 or 5 values."
+            )
+
+        if self.observation_space is not None and not self.observation_space.contains(observation):
             raise ValueError(
                 "Native environment returned an observation outside "
                 "observation_space."
             )
 
-        if not isinstance(reward, (int, float)) or isinstance(
-            reward,
-            bool,
-        ):
+        if not isinstance(reward, (int, float)) or isinstance(reward, bool):
             raise TypeError(
                 "Native environment reward must be a numeric scalar."
             )
 
         if not isinstance(terminated, bool):
-            raise TypeError(
-                "terminated must be bool."
-            )
+            raise TypeError("terminated must be bool.")
 
         if not isinstance(truncated, bool):
-            raise TypeError(
-                "truncated must be bool."
-            )
+            raise TypeError("truncated must be bool.")
 
         if terminated and truncated:
             raise ValueError(
@@ -168,8 +185,7 @@ class GymnasiumAdapter(gym.Env[Any, Any]):
 
         if not isinstance(info, dict):
             raise TypeError(
-                "Native environment step() must return "
-                "(observation, reward, terminated, truncated, dict_info)."
+                "Native environment step() must return dict info."
             )
 
         return (
@@ -179,10 +195,6 @@ class GymnasiumAdapter(gym.Env[Any, Any]):
             truncated,
             info,
         )
-
-    def render(self) -> Any:
-        """Delegate rendering to the native environment."""
-        return self._environment.render()
 
     def close(self) -> None:
         """Close the native environment."""

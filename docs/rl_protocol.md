@@ -111,3 +111,15 @@ The protocol must preserve:
 The RL protocol describes interaction semantics.
 
 Task-specific implementation details belong to the task environment and task contract rather than being embedded into the generic protocol.
+## Canonical RL API
+
+The canonical RL agent contract is:
+
+`agentforge.agents.rl.base.RLAgent`
+
+The canonical policy contract is:
+
+`agentforge.agents.rl.policy.Policy`
+
+Legacy or integration-facing agent adapters may remain available for compatibility,
+but new RL-specific implementations should target the canonical RL contracts.

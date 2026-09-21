@@ -206,3 +206,59 @@ When a canonical contract exists, new task implementations should target the can
 The verifier layer includes `BaseVerifier` as the verifier contract and `VerifierExecutor` as the runtime execution component.
 
 `VerifierExecutor` operates on registered verifier implementations and integrates verifier execution with the evaluation and reporting flow.
+## Canonical API Policy
+
+The framework maintains one canonical public API per core concept.
+
+### Canonical APIs
+
+| Concept | Canonical API |
+|---|---|
+| Task specification | `agentforge.contracts.task.TaskSpec` |
+| Environment | `agentforge.environment.base.AgentForgeEnv` |
+| Gymnasium integration | `agentforge.environment.gym_adapter.GymnasiumAdapter` |
+| Environment state | `agentforge.environment.state.EnvironmentState` |
+| Transition | `agentforge.environment.transition.Transition` |
+| Task registry | `agentforge.runtime.task_registry.TaskRegistry` |
+| Task catalog | `agentforge.runtime.catalog.TaskCatalog` |
+| Episode execution | `agentforge.runtime.episode_runner.EpisodeRunner` |
+| Evaluation | `agentforge.runtime.evaluation_runner.EvaluationRunner` |
+| Trajectory | `agentforge.runtime.trajectory.Trajectory` |
+| Trajectory recording | `agentforge.runtime.trajectory_recorder.TrajectoryRecorder` |
+| Reward model | `agentforge.runtime.contracts.rewards.RewardEngine` |
+| Verifier contract | `agentforge.verifier.contracts.BaseVerifier` |
+| Verifier execution | `agentforge.verifier.executable.VerifierExecutor` |
+| RL agent | `agentforge.agents.rl.base.RLAgent` |
+| RL policy | `agentforge.agents.rl.policy.Policy` |
+
+### Legacy Modules
+
+Modules outside the canonical paths above may remain for compatibility, integration,
+reporting, orchestration, oracle, or adapter responsibilities.
+
+A legacy module must not introduce a second canonical implementation of the same
+core contract. Compatibility modules should delegate to or re-export the canonical
+implementation where applicable.
+
+The canonical API is the source of truth for new framework code.
+
+
+## Legacy Module Policy
+
+Modules listed below are compatibility modules and are not canonical APIs. New framework code should depend on the canonical APIs documented above. Legacy modules remain available only to preserve compatibility with existing integrations.
+
+### Legacy Compatibility Modules
+
+- `src/agentforge/adapter/agent.py` — compatibility-only; do not introduce new dependencies on this module.
+- `src/agentforge/adapter/gymnasium.py` — compatibility-only; do not introduce new dependencies on this module.
+- `src/agentforge/adapter/agentforge_bench.py` — compatibility-only; do not introduce new dependencies on this module.
+- `src/agentforge/integration/episode.py` — compatibility-only; do not introduce new dependencies on this module.
+- `src/agentforge/integration/evaluation.py` — compatibility-only; do not introduce new dependencies on this module.
+- `src/agentforge/orchestration/episode.py` — compatibility-only; do not introduce new dependencies on this module.
+- `src/agentforge/orchestration/evaluation.py` — compatibility-only; do not introduce new dependencies on this module.
+- `src/agentforge/oracle/trajectory.py` — compatibility-only; do not introduce new dependencies on this module.
+- `src/agentforge/reporting/episode_summary.py` — compatibility-only; do not introduce new dependencies on this module.
+- `src/agentforge/reporting/trajectory_analysis.py` — compatibility-only; do not introduce new dependencies on this module.
+- `src/agentforge/reporting/verifier_results.py` — compatibility-only; do not introduce new dependencies on this module.
+
+Canonical API ownership remains with the documented `agentforge.contracts`, `agentforge.environment`, `agentforge.runtime`, `agentforge.verifier`, and `agentforge.agents.rl` modules.

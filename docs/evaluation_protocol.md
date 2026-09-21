@@ -141,3 +141,11 @@ The evaluation protocol therefore uses the runtime `EvaluationRunner` implementa
 The verifier contract is represented by `BaseVerifier`, which defines the verifier interface used by the framework.
 
 `VerifierExecutor` is the executable verifier component responsible for invoking registered verifier implementations and producing verification results within the evaluation flow.
+## Canonical Evaluation API
+
+The canonical evaluation runtime component is:
+
+`agentforge.runtime.evaluation_runner.EvaluationRunner`
+
+Legacy integration or orchestration modules may remain as compatibility layers,
+but the runtime evaluation contract is defined by `EvaluationRunner`.
