@@ -125,3 +125,19 @@ The canonical runtime evaluation component is `EvaluationRunner`.
 Its execution boundary is responsible for running evaluation action sequences against the resolved environment and producing `EvaluationResult` / `EpisodeResult` data for verifier processing.
 
 The public evaluation layer separately handles held-out evaluation task selection through the task catalog.
+
+
+## Evaluation Runtime Component
+
+The canonical runtime evaluation component is `agentforge.runtime.evaluation_runner.EvaluationRunner`.
+
+`EvaluationRunner` executes evaluation episodes and produces `EvaluationResult` data containing episode results, aggregate reward information, and verification results where applicable.
+
+The evaluation protocol therefore uses the runtime `EvaluationRunner` implementation as the execution component for the documented evaluation lifecycle.
+
+
+## Verifier Execution
+
+The verifier contract is represented by `BaseVerifier`, which defines the verifier interface used by the framework.
+
+`VerifierExecutor` is the executable verifier component responsible for invoking registered verifier implementations and producing verification results within the evaluation flow.

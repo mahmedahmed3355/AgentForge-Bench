@@ -199,3 +199,10 @@ Before a framework contract is considered frozen:
 The repository contains compatibility-oriented components from earlier framework layers.
 
 When a canonical contract exists, new task implementations should target the canonical contract rather than introducing another parallel contract.
+
+
+## Verifier Execution Layer
+
+The verifier layer includes `BaseVerifier` as the verifier contract and `VerifierExecutor` as the runtime execution component.
+
+`VerifierExecutor` operates on registered verifier implementations and integrates verifier execution with the evaluation and reporting flow.

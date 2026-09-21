@@ -103,3 +103,12 @@ The framework contains compatibility-oriented trajectory recorder behavior.
 The canonical trajectory data model is defined by `runtime/trajectory.py`.
 
 Any compatibility representation must not silently change the canonical trajectory semantics.
+
+
+## Trajectory Recorder
+
+The runtime trajectory recording component is `agentforge.runtime.trajectory_recorder.TrajectoryRecorder`.
+
+`TrajectoryRecorder` captures episode interaction data and produces trajectory steps using the canonical `agentforge.runtime.trajectory.TrajectoryStep` contract.
+
+The recorder does not define a second canonical `TrajectoryStep` model. It uses the canonical trajectory model from `runtime/trajectory.py`.
